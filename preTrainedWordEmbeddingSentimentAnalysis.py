@@ -15,10 +15,11 @@ np.random.seed(1)
 np.set_printoptions(threshold=np.inf)
 MAX_SENTENCE_LENGTH = 40
 WORD_EMBEDDING_VECTOR_SIZE=30
+NUMBER_CLASSES = 5
 vocab = dict()
 
 '''
-words not in train: terriblr, johnny, solicitous, needlesharp, weddings, paths, beacause
+words not in train: terriblr, johnny, solicitous, needlesharp, weddings, paths, beacause etc
 '''
 def encode_data(text, isTrain=True):
     encodedText = []
@@ -112,16 +113,12 @@ class NeuralNet:
     def __init__(self, reviews, ratings):
         self.reviews = np.array(reviews, dtype='float32')
         self.ratings = ratings
-        self.numOfOutputClasses = 5
         self.model = None
-        self.learningRate = 0.001
-        self.W = None
-        self.b = None
 
     def build_nn(self):
         featureDim = self.reviews.shape[1]
         self.model = tf.keras.Sequential()
-        self.model.add(tf.keras.layers.Dense(self.numOfOutputClasses, activation=softmax_activation, input_shape=(featureDim,)))
+        self.model.add(tf.keras.layers.Dense(NUMBER_CLASSES, activation=softmax_activation, input_shape=(featureDim,)))
         self.model.summary()
         '''self.model.compile(optimizer='adam',
                       loss=tf.keras.losses.SparseCategoricalCrossentropy(),
@@ -137,12 +134,24 @@ class NeuralNet:
         return np.argmax(self.model.predict(reviews), axis=1) + 1
 
 
+def evaluation_matrices(y, y_hat):
+    confusionMatrix = np.zeros((NUMBER_CLASSES+1, NUMBER_CLASSES+1))
+    for i in range(len(y)):
+        confusionMatrix[y[i]][y_hat[i]]+=1
+    #print(confusionMatrix)
+    for i in range(1, NUMBER_CLASSES+1):
+        recall=1.0*confusionMatrix[i][i]/np.sum(confusionMatrix, axis=1)[i]
+        precision = 1.0*confusionMatrix[i][i] / np.sum(confusionMatrix, axis=0)[i]
+        f1score = 2.0*recall*precision/(recall+precision)
+        print("Class %d (Recall: %.2f, Precision: %.2f, F1-score: %.2f )"%(i, recall, precision, f1score))
+    print("overall accuracy: %.2f"%(1.0*np.trace(confusionMatrix)/np.sum(confusionMatrix)))
+
 # DO NOT MODIFY MAIN FUNCTION'S PARAMETERS
 def main(train_file, test_file):
     train_data = pd.read_csv(train_file)
     test_data = pd.read_csv(test_file)
     train_ratings = np.array(train_data["ratings"])
-    batch_size, epochs = 128, 50
+    batch_size, epochs = 128, 20
 
     train_reviews = preprocess_data(train_data)
     test_reviews = preprocess_data(test_data, False)
@@ -150,10 +159,14 @@ def main(train_file, test_file):
     model = NeuralNet(train_reviews, train_ratings)
     model.build_nn()
     model.train_nn(batch_size, epochs)
-
+    print("=================Train data evaluation metrices==========================")
+    evaluation_matrices(train_ratings, model.predict(train_reviews))
+    print("=================Test data evaluation metrices==========================")
     testPredictions = model.predict(test_reviews)
     test_ground_truth = np.array(pd.read_csv('gold_test.csv')['ratings'])
-    print('==test accuracy: ',np.sum(test_ground_truth==testPredictions)/test_ground_truth.shape[0],'==')
+
+    evaluation_matrices(test_ground_truth, testPredictions)
+
     return testPredictions
 
 

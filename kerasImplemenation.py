@@ -85,9 +85,6 @@ class NeuralNet:
         self.ratings = ratings
         self.numOfOutputClasses = 5
         self.model = None
-        self.learningRate = 0.001
-        self.W = None
-        self.b = None
 
     def build_nn(self):
         featureDim = self.reviews.shape[1]
