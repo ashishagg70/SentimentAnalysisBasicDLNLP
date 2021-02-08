@@ -62,10 +62,8 @@ def remove_stopwords(text):
     #print(newtext[0])
     return newtext
 
-
 def perform_tokenization(text):
     return [word_tokenize(i) for i in text]
-
 
 def perform_padding(data):
     return [list(np.pad(sent, (0, MAX_SENTENCE_LENGTH - len(sent)), 'constant', constant_values='0')) for sent in data]
@@ -144,8 +142,8 @@ def evaluation_matrices(y, y_hat):
     overallFalseNegative=0
     for i in range(1, NUMBER_CLASSES+1):
         overallTruePositive+=confusionMatrix[i][i]
-        overallFalseNegative+=np.sum(confusionMatrix, axis=1)[i]
-        overallFalsePositive+=np.sum(confusionMatrix, axis=0)[i]
+        overallFalseNegative+=np.sum(confusionMatrix, axis=1)[i]-confusionMatrix[i][i]
+        overallFalsePositive+=np.sum(confusionMatrix, axis=0)[i]-confusionMatrix[i][i]
         recall=1.0*confusionMatrix[i][i]/np.sum(confusionMatrix, axis=1)[i]
         precision = 1.0*confusionMatrix[i][i] / np.sum(confusionMatrix, axis=0)[i]
         f1score = 2.0*recall*precision/(recall+precision)
@@ -153,6 +151,7 @@ def evaluation_matrices(y, y_hat):
     overallRecall=1.0*overallTruePositive/(overallTruePositive+overallFalseNegative)
     overallPrecision = 1.0 * overallTruePositive / (overallTruePositive + overallFalsePositive)
     overallf1Score=2.0*overallRecall*overallPrecision/(overallRecall+overallPrecision)
+    #print("overallTruePositive: %d, trace: %d"%(overallTruePositive, np.trace(confusionMatrix)))
     print("overall (accuracy: %.2f, Recall: %.2f, Precision: %.2f, F1-score: %.2f)"%(1.0*np.trace(confusionMatrix)/np.sum(confusionMatrix), overallRecall, overallPrecision, overallf1Score ))
 
 # DO NOT MODIFY MAIN FUNCTION'S PARAMETERS
