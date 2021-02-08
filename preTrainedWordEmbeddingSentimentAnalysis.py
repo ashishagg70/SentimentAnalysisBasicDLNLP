@@ -139,12 +139,21 @@ def evaluation_matrices(y, y_hat):
     for i in range(len(y)):
         confusionMatrix[y[i]][y_hat[i]]+=1
     #print(confusionMatrix)
+    overallTruePositive=0
+    overallFalsePositive=0
+    overallFalseNegative=0
     for i in range(1, NUMBER_CLASSES+1):
+        overallTruePositive+=confusionMatrix[i][i]
+        overallFalseNegative+=np.sum(confusionMatrix, axis=1)[i]
+        overallFalsePositive+=np.sum(confusionMatrix, axis=0)[i]
         recall=1.0*confusionMatrix[i][i]/np.sum(confusionMatrix, axis=1)[i]
         precision = 1.0*confusionMatrix[i][i] / np.sum(confusionMatrix, axis=0)[i]
         f1score = 2.0*recall*precision/(recall+precision)
         print("Class %d (Recall: %.2f, Precision: %.2f, F1-score: %.2f )"%(i, recall, precision, f1score))
-    print("overall accuracy: %.2f"%(1.0*np.trace(confusionMatrix)/np.sum(confusionMatrix)))
+    overallRecall=1.0*overallTruePositive/(overallTruePositive+overallFalseNegative)
+    overallPrecision = 1.0 * overallTruePositive / (overallTruePositive + overallFalsePositive)
+    overallf1Score=2.0*overallRecall*overallPrecision/(overallRecall+overallPrecision)
+    print("overall (accuracy: %.2f, Recall: %.2f, Precision: %.2f, F1-score: %.2f)"%(1.0*np.trace(confusionMatrix)/np.sum(confusionMatrix), overallRecall, overallPrecision, overallf1Score ))
 
 # DO NOT MODIFY MAIN FUNCTION'S PARAMETERS
 def main(train_file, test_file):
